@@ -1,0 +1,16 @@
+{
+	"name": "trackdesk",
+	"owner": {
+		"name": "Trackdesk",
+		"email": "support@trackdesk.com",
+		"url": "https://trackdesk.com"
+	},
+	"description": "Official Trackdesk plugins for Claude.",
+	"plugins": [
+		{
+			"name": "trackdesk",
+			"source": "./trackdesk",
+			"description": "Manage your Trackdesk affiliate program from Claude: performance reports, affiliate and conversion reviews, and affiliate payouts."
+		}
+	]
+}

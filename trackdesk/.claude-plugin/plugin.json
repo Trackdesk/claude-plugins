@@ -1,0 +1,28 @@
+{
+	"name": "trackdesk",
+	"displayName": "Trackdesk",
+	"version": "1.0.0",
+	"description": "Manage your Trackdesk affiliate program from Claude: performance reports, affiliate and conversion reviews, and affiliate payouts through the Trackdesk MCP server.",
+	"author": {
+		"name": "Trackdesk",
+		"email": "support@trackdesk.com",
+		"url": "https://trackdesk.com"
+	},
+	"homepage": "https://trackdesk.com",
+	"license": "LicenseRef-Trackdesk",
+	"keywords": ["trackdesk", "affiliate", "affiliate-marketing", "partner-program", "mcp"],
+	"userConfig": {
+		"tenant_id": {
+			"type": "string",
+			"title": "Tenant ID",
+			"description": "The subdomain your program runs on: for https://acme.trackdesk.com enter acme.",
+			"required": true
+		},
+		"api_key": {
+			"type": "string",
+			"title": "API key",
+			"description": "Leave empty to sign in with your Trackdesk account (OAuth). Set a personal access token from Settings → Integrations → Personal access tokens only where a browser sign-in is not possible.",
+			"sensitive": true
+		}
+	}
+}

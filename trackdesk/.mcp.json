@@ -1,0 +1,11 @@
+{
+	"mcpServers": {
+		"trackdesk": {
+			"type": "http",
+			"url": "https://${user_config.tenant_id}.trackdesk.com/mcp",
+			"headers": {
+				"X-Api-Key": "${user_config.api_key}"
+			}
+		}
+	}
+}
