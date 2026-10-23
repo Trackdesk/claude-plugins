@@ -1,7 +1,7 @@
 ---
 name: review-affiliates
 description: Review pending affiliate sign-ups in a Trackdesk program and approve or reject them — lists the applicants with their registration answers, website, country, IP address and fraud flags, points out what deserves a closer look, and changes statuses only after the user confirms. Also enables or disables existing affiliates. Use when the user asks about new or pending affiliates, affiliate applications or sign-ups, or wants to approve, reject, enable or disable affiliates.
-allowed-tools: mcp__plugin_trackdesk_trackdesk__search
+allowed-tools: mcp__plugin_trackdesk_trackdesk__search mcp__plugin_trackdesk_trackdesk__read_data
 ---
 
 # Review affiliates
@@ -13,9 +13,12 @@ Request: $ARGUMENTS
 
 ## 1. Fetch the applicants
 
+With `read_data`:
+
 ```js
 async () => {
 	const applicants = []
+	let truncated = false
 	for (let offset = 0, page = 0; page < 10; page++, offset += 100) {
 		const res = await codemode.request({
 			method: 'POST',
@@ -27,7 +30,8 @@ async () => {
 		})
 		if (!res?.affiliates) return { error: res }
 		applicants.push(...res.affiliates)
-		if (!res.pagination?.hasMore) break
+		truncated = Boolean(res.pagination?.hasMore)
+		if (!truncated) break
 	}
 
 	const sharedIps = applicants.reduce((seen, a) => {
@@ -35,20 +39,23 @@ async () => {
 		return seen
 	}, {})
 
-	return applicants.map((a) => ({
-		name: a.name,
-		email: a.email,
-		publicId: a.publicId,
-		accountId: a.accountId,
-		registeredAt: a.registeredAt,
-		country: a.registrationCountryCode,
-		ip: a.ipAddress,
-		applicantsFromSameIp: a.ipAddress ? sharedIps[a.ipAddress] : null,
-		fraudSuspicion: a.fraudSuspicion?.isSuspected ? a.fraudSuspicion.causes : null,
-		referredBy: a.referralAccount?.name ?? null,
-		protected: a.protected,
-		registration: a.registrationData ?? null,
-	}))
+	return {
+		truncated,
+		applicants: applicants.map((a) => ({
+			name: a.name,
+			email: a.email,
+			publicId: a.publicId,
+			accountId: a.accountId,
+			registeredAt: a.registeredAt,
+			country: a.registrationCountryCode,
+			ip: a.ipAddress,
+			applicantsFromSameIp: a.ipAddress ? sharedIps[a.ipAddress] : null,
+			fraudSuspicion: a.fraudSuspicion?.isSuspected ? a.fraudSuspicion.causes : null,
+			referredBy: a.referralAccount?.name ?? null,
+			protected: a.protected,
+			registration: a.registrationData ?? null,
+		})),
+	}
 }
 ```
 
@@ -85,6 +92,8 @@ rejects applicants without saying whether to e-mail them a reason, ask.
   rejection e-mail.
 - Disable or re-enable an existing affiliate: `ACCOUNT_STATUS_DISABLED` or
   `ACCOUNT_STATUS_ENABLED` without `rejection`.
+
+With `update_data`:
 
 ```js
 async () => {
@@ -129,4 +138,5 @@ These go through the same read, describe, confirm cycle:
   the team only.
 - Access to a private offer: `POST /api/node/offers/v1/{offerId}/affiliates/sources`.
 
-Check each endpoint's request schema with the search tool before the first call.
+Check each endpoint's request schema and `x-mcp-operation-type` with `search` before the first
+call: the note is created with `create_data`, the others are changed with `update_data`.

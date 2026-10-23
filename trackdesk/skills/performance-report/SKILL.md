@@ -2,7 +2,7 @@
 name: performance-report
 description: Build a performance report for a Trackdesk affiliate program — clicks, conversions, revenue, affiliate payouts, profit and fraud rates for a period, broken down by day, week, offer, affiliate, country, advertiser, tier or sub-ID, optionally compared with the previous period. Use when the user asks how the program, an offer or an affiliate is doing, for top or worst affiliates or offers, a trend, or a weekly or monthly summary.
 argument-hint: '[period] [breakdown], e.g. "last month by offer"'
-allowed-tools: mcp__plugin_trackdesk_trackdesk__search
+allowed-tools: mcp__plugin_trackdesk_trackdesk__search mcp__plugin_trackdesk_trackdesk__read_data
 ---
 
 # Performance report
@@ -29,7 +29,7 @@ Request: $ARGUMENTS
   | landing pages, coupons | `REPORT_GROUPING_LANDING_PAGE`, `_COUPON`               | `landingPage`, `coupon`           |
   | sub-IDs                | `REPORT_GROUPING_AFF_S1`…`_AFF_S5`, `_ADV_S1`…`_ADV_S5` | `affS1`…, `advS1`…                |
 
-  `_WEEK` is short for `REPORT_GROUPING_WEEK`, and so on; the search tool lists every
+  `_WEEK` is short for `REPORT_GROUPING_WEEK`, and so on; `search` lists every
   grouping.
 
 - **Metric** — rank by the metric the user named. When "best" or "worst" leaves it open,
@@ -50,7 +50,7 @@ Request: $ARGUMENTS
 affiliate, offer and country overview reports are deprecated. Each row has its key field
 plus `values`; `total.values` holds the totals. For a comparison, run the same request for
 the previous period of equal length and join the full row sets by key. Comparing two top-N
-lists would lose whichever entity moved most.
+lists would lose whichever entity moved most. Run it with `read_data`:
 
 ```js
 async () => {

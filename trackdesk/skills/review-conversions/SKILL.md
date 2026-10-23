@@ -1,7 +1,7 @@
 ---
 name: review-conversions
 description: Review Trackdesk conversions waiting for a decision (pending, on hold or in quality control), spot suspicious ones — fraud flags, duplicate orders or customers, outlier amounts, payout above revenue, bursts from one affiliate — and approve, reject or refund them after the user confirms, including bulk updates from a list of order IDs such as a shop's refunds export. Use when the user asks to review, approve, reject, refund or clean up conversions, or asks what happened to an order, click or customer.
-allowed-tools: mcp__plugin_trackdesk_trackdesk__search
+allowed-tools: mcp__plugin_trackdesk_trackdesk__search mcp__plugin_trackdesk_trackdesk__read_data
 ---
 
 # Review conversions
@@ -21,7 +21,7 @@ the request, review `CONVERSION_STATUS_PENDING`, `_ON_HOLD` and `_QUALITY_CONTRO
 last 30 days.
 
 Rows name the affiliate only by `source` (`id`, `publicId`); look names up with
-`POST /api/node/affiliates/v1` and `filters.publicIds`.
+`POST /api/node/affiliates/v1` and `filters.publicIds`. With `read_data`:
 
 ```js
 async () => {
@@ -30,6 +30,7 @@ async () => {
 		conversionStatuses: ['CONVERSION_STATUS_PENDING'],
 	}
 	const rows = []
+	let truncated = false
 	for (let offset = 0, page = 0; page < 20; page++, offset += 500) {
 		const res = await codemode.request({
 			method: 'POST',
@@ -38,7 +39,8 @@ async () => {
 		})
 		if (!res?.pagination) return { error: res }
 		rows.push(...(res.rows ?? []))
-		if (!res.pagination.hasMore) break
+		truncated = Boolean(res.pagination.hasMore)
+		if (!truncated) break
 	}
 
 	const num = (d) => Number(d?.value ?? 0)
@@ -94,6 +96,7 @@ async () => {
 
 	return {
 		count: conversions.length,
+		truncated,
 		totals,
 		flagged: conversions.filter((c) => c.flags.length > 0),
 		byAffiliate: Object.entries(countBy((r) => r.source?.publicId))
@@ -123,10 +126,10 @@ refunding or marking as fraud removes it. Then wait for the user's yes.
 Leave out conversions that already have the target status, and those included in an
 affiliate settlement (`accountSettlementId` set): the API refuses to change a settled
 conversion. Name the settled ones; changing them would first need that affiliate settlement
-deleted, which the `pay-affiliates` skill covers.
+deleted in Trackdesk.
 
 `PUT /api/node/conversions/v1/{id}/status` changes one conversion. Run a confirmed batch in
-one `execute` call:
+one `update_data` call:
 
 ```js
 async () => {
@@ -152,7 +155,8 @@ Report how many were updated and list the failures with the API's message.
 
 When the user brings order IDs (a refunds export, a list of cancelled orders):
 
-1. Look them up with the conversion report, `filters.externalIds` in chunks of up to 100.
+1. Drop duplicate order IDs — a request that repeats one fails validation — then look them
+   up with the conversion report, `filters.externalIds` in chunks of up to 100.
 2. Report which order IDs matched one conversion, which matched several, and which matched
    none.
 3. After confirmation, set the matched conversions to `CONVERSION_STATUS_REFUNDED` (or the
